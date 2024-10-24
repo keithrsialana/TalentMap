@@ -1,5 +1,6 @@
 import { QueryResult } from "pg";
 import { pool } from "../connection";
+import roleService from "./roleService";
 
 class Employee{
     id:number;
@@ -18,7 +19,9 @@ class Employee{
 }
 
 class EmployeeService {
-    employeeList: Employee[] = [];
+    addEmployee(firstName: any, lastName: any, roleId: any, managerId: any) {
+        
+    }
 
     async getEmployeeById(id: number): Promise<Employee | null> {
         try {
@@ -64,6 +67,51 @@ class EmployeeService {
         }
     }
 
+    async createEmployee(first_name:string, last_name:string, role_name:string, manager_name:string):Promise<void>{
+        try{
+            // splits the first name from the rest of the name
+            const fullNameArray = manager_name.split(' ');
+
+            // assuming some last names have separated words by space, put the rest of the name in lastNameArray
+            const [firstName, ...lastNameArray] = fullNameArray;
+
+            // create complete string of last name
+            const lastName = lastNameArray.join(' ');
+            const managerResult = await pool.query("SELECT * from employee WHERE first_name=$1 AND last_name=$2",[firstName, lastName]);
+
+            if (managerResult.rowCount != null &&  managerResult.rowCount > 0 ){
+                const role = await roleService.getRoleByTitle(role_name);
+                if (role != null) {
+                    const result = await pool.query('INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ($1,$2,$3,$4)',[firstName,last_name, ]);
+
+                    return result.rows[0];
+                }
+            }
+        }catch(err){
+
+        }
+    }
+
+    async getEmployeesbyFullName(full_name:string):Promise<Employee[]> {
+        try{
+            // splits the first name from the rest of the name
+            const fullNameArray = full_name.split(' ');
+
+            // assuming some last names have separated words by space, put the rest of the name in lastNameArray
+            const [firstName, ...lastNameArray] = fullNameArray;
+
+            // create complete string of last name
+            const lastName = lastNameArray.join(' ');
+
+            const result = await pool.query("SELECT * FROM employee WHERE first_name=$1 AND last_name=$2",[firstName, lastName]);
+
+            return result.rows[0];
+        }catch(err){
+            console.error(`[ERROR] getEmployeesbyFullName query did not get a response from the database: ${err}`);
+            return []; // return an empty array on error
+        }
+    }
+
     async getEmployeesByFirstName(first_name: string): Promise<Employee[]> {
         try {
             const result = await pool.query("SELECT * FROM employee WHERE first_name=$1", [first_name]);
@@ -97,11 +145,12 @@ class EmployeeService {
     async getEmployees(): Promise<Employee[]> {
         try {
             const result = await pool.query("SELECT * FROM employee");
-            this.employeeList = result.rows; // rssuming the database returns an array of Employee objects
-            return this.employeeList;
+            return result.rows;
         } catch (err) {
             console.error("[ERROR] Employees query did not get a response from the database: " + err);
             return []; // return an empty array on error
         }
     }
 }
+
+export default new EmployeeService();

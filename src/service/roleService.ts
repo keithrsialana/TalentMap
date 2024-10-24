@@ -16,6 +16,16 @@ export class Role {
 }
 
 export class RoleService {
+
+    async createRole(title:string, salary:number, department:number | undefined):Promise<void>{
+        try{
+            await pool.query("INSERT INTO role (title,salary,department) values($1,$2,$3)",[title,salary,department]);
+            console.log(`Department ${title} has been successfully created`);
+        }catch(err){
+            console.error(`[ERROR] CreateRole query failed: ${err.message}`);
+            throw new Error("[ERROR] CreateRole query did not get a response from the database");
+        }
+    }
     async getRoleById(id: number): Promise<Role | null> {
         try {
             const res = await pool.query("SELECT * FROM role WHERE id=$1", [id]);

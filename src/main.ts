@@ -1,6 +1,8 @@
 import { connectToDb } from './connection.ts';
 import { inquirer } from 'inquirer';
-import departmentService from './service/departmentService.ts';
+import departmentService, { Department } from './service/departmentService.ts';
+import employeeService from './service/employeeService.ts';
+import roleService from './service/roleService.ts';
 
 await connectToDb();
 
@@ -72,13 +74,15 @@ const viewDepartmentByName = (name:string) => {
 
 const viewRoles = () => {
     console.log('Viewing all roles...');
-    // TODO: call function to fetch and display roles
+    const roles = roleService.getRoles();
+    console.table(roles);
     startApplication();  // return to main menu
 };
 
 const viewEmployees = () => {
     console.log('Viewing all employees...');
-    // TODO: call function to fetch and display employees
+    const employees = employeeService.getEmployees();
+    console.table(employees);
     startApplication();  // return to main menu
 };
 
@@ -89,12 +93,14 @@ const addDepartment = async () => {
         message: 'Enter the name of the new department:'
     });
     console.log(`Adding department: ${departmentName}...`);
-    // TODO: call function to add department
+    departmentService.createDepartment(departmentName);
     startApplication();  // return to main menu
 };
 
 const addRole = async () => {
-    const { roleName, salary } = await inquirer.prompt([
+    const departments = await departmentService.getDepartments();
+    const departmentNames = departments.map((department) => department.name);
+    const { roleName, salary, departmentName } = await inquirer.prompt([
         {
             type: 'input',
             name: 'roleName',
@@ -104,15 +110,27 @@ const addRole = async () => {
             type: 'input',
             name: 'salary',
             message: 'Enter the salary for the new role:'
+        },
+        {
+            type:'list',
+            name:'departmentName',
+            message: 'Select associated department:',
+            choices: departmentNames
         }
     ]);
-    console.log(`Adding role: ${roleName} with salary: ${salary}...`);
-    // TODO: call function to add role
+    const foundDepartment:any = departmentService.getDepartmentByName(departmentName);
+    console.log(`Adding role: ${roleName} with salary: ${salary} and department: ${departmentName}...`);
+    roleService.createRole(roleName, salary, foundDepartment.id);
     startApplication();  // return to main menu
 };
 
 const addEmployee = async () => {
-    const { firstName, lastName } = await inquirer.prompt([
+    const roles = await roleService.getRoles();
+    const roleNames =  roles.map((role) => role.title);
+
+    const employees = await employeeService.getEmployees();
+    const employeeNames = employees.map((employee) => `${employee.first_name} ${employee.last_name}`);
+    const { firstName, lastName, roleName, managerName } = await inquirer.prompt([
         {
             type: 'input',
             name: 'firstName',
@@ -122,12 +140,32 @@ const addEmployee = async () => {
             type: 'input',
             name: 'lastName',
             message: 'Enter the last name of the new employee:'
+        },
+        {
+            type: 'input',
+            name: 'roleName',
+            message: 'Choose a role for the new employee:',
+            choices: roleNames
+        },
+        {
+            type: 'input',
+            name: 'managerName',
+            message: `Select the new employee's manager (optional):`,
+            choices: [...employeeNames, 'None'],
+            default: null // Set default to null in case there's no manager
         }
     ]);
-    console.log(`Adding employee: ${firstName} ${lastName}...`);
-    // TODO: call function to add employee
-    startApplication();  // return to main menu
+
+
+
+    console.log(`Adding employee: ${firstName} ${lastName}, Role: ${roleName}, Manager Name: ${managerName || 'None'}...`);
+
+    // TODO: Call function to add employee using the gathered data
+    await employeeService.createEmployee(firstName, lastName, roleName, managerName);
+
+    startApplication();  // Return to main menu
 };
+
 
 const updateEmployeeRole = async () => {
     const { employeeId, newRoleId } = await inquirer.prompt([

@@ -11,7 +11,6 @@ export class Department {
 }
 
 class DepartmentService {
-	departmentList: Department[] = [];
     
     async createDepartment(name: string) {
         try {
@@ -44,8 +43,7 @@ class DepartmentService {
     async getDepartments(): Promise<Department[]> {
         try {
             const res = await pool.query("SELECT * FROM department");
-            this.departmentList = res.rows; // assign the result to the department list
-            return this.departmentList; // return the list of departments
+            return res.rows; // return the list of departments
         } catch (err) {
             console.error(`[ERROR] Departments query failed: ${err}`);
             throw new Error("[ERROR] Departments query did not get a response from the database");
