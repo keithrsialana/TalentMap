@@ -1,5 +1,4 @@
-import { QueryResult } from "pg";
-import { pool } from "../connection";
+import { pool } from "../connection.js";
 
 export class Role {
     id: number;
@@ -22,7 +21,7 @@ export class RoleService {
             await pool.query("INSERT INTO role (title,salary,department) values($1,$2,$3)",[title,salary,department]);
             console.log(`Department ${title} has been successfully created`);
         }catch(err){
-            console.error(`[ERROR] CreateRole query failed: ${err.message}`);
+            console.error(`[ERROR] CreateRole query failed: ${err}`);
             throw new Error("[ERROR] CreateRole query did not get a response from the database");
         }
     }
@@ -31,7 +30,7 @@ export class RoleService {
             const res = await pool.query("SELECT * FROM role WHERE id=$1", [id]);
             return res.rows[0] ? new Role(res.rows[0].id, res.rows[0].title, res.rows[0].salary, res.rows[0].department) : null;
         } catch (err) {
-            console.error(`[ERROR] GetRoleById query failed: ${err.message}`);
+            console.error(`[ERROR] GetRoleById query failed: ${err}`);
             throw new Error("[ERROR] GetRoleById query did not get a response from the database");
         }
     }
@@ -41,7 +40,7 @@ export class RoleService {
             const res = await pool.query("SELECT * FROM role WHERE title=$1", [title]);
             return res.rows[0] ? new Role(res.rows[0].id, res.rows[0].title, res.rows[0].salary, res.rows[0].department) : null;
         } catch (err) {
-            console.error(`[ERROR] GetRoleByTitle query failed: ${err.message}`);
+            console.error(`[ERROR] GetRoleByTitle query failed: ${err}`);
             throw new Error("[ERROR] GetRoleByTitle query did not get a response from the database");
         }
     }
@@ -51,7 +50,7 @@ export class RoleService {
             const res = await pool.query("SELECT * FROM role");
             return res.rows.map((row: any) => new Role(row.id, row.title, row.salary, row.department)); // return an array of Roles
         } catch (err) {
-            console.error(`[ERROR] GetRoles query failed: ${err.message}`);
+            console.error(`[ERROR] GetRoles query failed: ${err}`);
             throw new Error("[ERROR] GetRoles query did not get a response from the database");
         }
     }
@@ -71,7 +70,7 @@ export class RoleService {
             const res = await pool.query("SELECT * FROM role WHERE department=$1", [department.id]);
             return res.rows.map((row: any) => new Role(row.id, row.title, row.salary, row.department)); // return an array of Role instances
         } catch (err) {
-            console.error(`[ERROR] GetRoleByDepartment query failed: ${err.message}`);
+            console.error(`[ERROR] GetRoleByDepartment query failed: ${err}`);
             throw new Error("[ERROR] GetRoleByDepartment query did not get a response from the database");
         }
     }

@@ -1,5 +1,4 @@
-import { QueryResult } from "pg";
-import { pool } from "../connection";
+import { pool } from "../connection.js";
 export class Department {
 	id: number;
 	name: string;
@@ -14,7 +13,7 @@ class DepartmentService {
     
     async createDepartment(name: string) {
         try {
-            const res = await pool.query("INSERT INTO department (name) VALUES ($1)",[name]);
+            await pool.query("INSERT INTO department (name) VALUES ($1)",[name]);
             console.log(`New department ${name} was successfully created`);
         } catch (err) {
             console.error(`[ERROR] CreateDepartment query failed: ${err}`);

@@ -7,7 +7,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc",
-    "start": "nodemon dist/main.js"
+    "start:dev":"tsc && npm run start",
+    "start": "nodemon ./dist/main.js"
   },
   "author": "Keith Sialana",
   "license": "MIT",
@@ -17,6 +18,7 @@
     "pg": "^8.13.0"
   },
   "devDependencies": {
+    "@types/inquirer": "^9.0.7",
     "@types/pg": "^8.11.10",
     "nodemon": "^3.1.7",
     "typescript": "^5.6.3"

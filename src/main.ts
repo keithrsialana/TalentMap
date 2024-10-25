@@ -1,8 +1,8 @@
-import { connectToDb } from './connection.ts';
-import { inquirer } from 'inquirer';
-import departmentService, { Department } from './service/departmentService.ts';
-import employeeService from './service/employeeService.ts';
-import roleService from './service/roleService.ts';
+import { connectToDb } from './connection.js';
+import inquirer from 'inquirer';
+import departmentService from './service/departmentService.js';
+import employeeService from './service/employeeService.js';
+import roleService from './service/roleService.js';
 
 await connectToDb();
 
@@ -65,12 +65,6 @@ const viewDepartments = () => {
     console.table(departments);
     startApplication();  // return to main menu
 };
-
-const viewDepartmentByName = (name:string) => {
-    const department = departmentService.getDepartmentByName(name);
-    console.table(department);
-    startApplication();  // return to main menu
-}
 
 const viewRoles = () => {
     console.log('Viewing all roles...');
@@ -142,13 +136,13 @@ const addEmployee = async () => {
             message: 'Enter the last name of the new employee:'
         },
         {
-            type: 'input',
+            type: 'list',
             name: 'roleName',
             message: 'Choose a role for the new employee:',
             choices: roleNames
         },
         {
-            type: 'input',
+            type: 'list',
             name: 'managerName',
             message: `Select the new employee's manager (optional):`,
             choices: [...employeeNames, 'None'],
@@ -156,34 +150,35 @@ const addEmployee = async () => {
         }
     ]);
 
-
-
     console.log(`Adding employee: ${firstName} ${lastName}, Role: ${roleName}, Manager Name: ${managerName || 'None'}...`);
-
-    // TODO: Call function to add employee using the gathered data
     await employeeService.createEmployee(firstName, lastName, roleName, managerName);
-
     startApplication();  // Return to main menu
 };
 
 
 const updateEmployeeRole = async () => {
-    const { employeeId, newRoleId } = await inquirer.prompt([
+    const employees = employeeService.getEmployees();
+    const roles = roleService.getRoles();
+    const { employeeName, roleName } = await inquirer.prompt([
         {
-            type: 'input',
-            name: 'employeeId',
-            message: 'Enter the ID of the employee to update:'
+            type: 'list',
+            name: 'employeeName',
+            message: 'Select the Employee to update:',
+            choices: [(await employees).map((employee) => `${employee.first_name} ${employee.last_name}`)]
         },
         {
-            type: 'input',
-            name: 'newRoleId',
-            message: 'Enter the new role ID:'
+            type: 'list',
+            name: 'roleName',
+            message: `Select the Employee's new role:`,
+            choices: [(await roles).map((role) => role.title)]
         }
     ]);
-    console.log(`Updating employee ID ${employeeId} to role ID ${newRoleId}...`);
-    // TODO: call function to update employee role
+
+    console.log(`Updating employee ${employeeName} to role ${roleName}...`);
+    employeeService.updateEmployee(employeeName, roleName);
     startApplication();  // return to main menu
 };
 
 // start the application
 startApplication();
+
