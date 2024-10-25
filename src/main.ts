@@ -1,5 +1,5 @@
 import { connectToDb } from './connection.js';
-import inquirer from 'inquirer';
+import inq from 'inquirer';
 import departmentService from './service/departmentService.js';
 import employeeService from './service/employeeService.js';
 import roleService from './service/roleService.js';
@@ -8,6 +8,7 @@ await connectToDb();
 
 // function to start the application
 const startApplication = async () => {
+    
     const menu = [
         {
             type: 'list',
@@ -27,7 +28,7 @@ const startApplication = async () => {
     ];
 
     // prompt the user
-    const { action } = await inquirer.prompt(menu);
+    const { action } = await inq.prompt(menu);
 
     // handle the user choice
     switch (action) {
@@ -59,42 +60,42 @@ const startApplication = async () => {
 };
 
 // placeholder functions for each action
-const viewDepartments = () => {
+const viewDepartments = async () => {
     console.log('Viewing all departments...');
-    const departments = departmentService.getDepartments();
+    const departments = await departmentService.getDepartments();
     console.table(departments);
     startApplication();  // return to main menu
 };
 
-const viewRoles = () => {
+const viewRoles = async () => {
     console.log('Viewing all roles...');
-    const roles = roleService.getRoles();
+    const roles = await roleService.getRoles();
     console.table(roles);
     startApplication();  // return to main menu
 };
 
-const viewEmployees = () => {
+const viewEmployees = async () => {
     console.log('Viewing all employees...');
-    const employees = employeeService.getEmployees();
+    const employees = await employeeService.getEmployees();
     console.table(employees);
     startApplication();  // return to main menu
 };
 
 const addDepartment = async () => {
-    const { departmentName } = await inquirer.prompt({
+    const { departmentName } = await inq.prompt({
         type: 'input',
         name: 'departmentName',
         message: 'Enter the name of the new department:'
     });
     console.log(`Adding department: ${departmentName}...`);
-    departmentService.createDepartment(departmentName);
+    await departmentService.createDepartment(departmentName);
     startApplication();  // return to main menu
 };
 
 const addRole = async () => {
     const departments = await departmentService.getDepartments();
     const departmentNames = departments.map((department) => department.name);
-    const { roleName, salary, departmentName } = await inquirer.prompt([
+    const { roleName, salary, departmentName } = await inq.prompt([
         {
             type: 'input',
             name: 'roleName',
@@ -109,12 +110,12 @@ const addRole = async () => {
             type:'list',
             name:'departmentName',
             message: 'Select associated department:',
-            choices: departmentNames
+            choices: [...departmentNames]
         }
     ]);
-    const foundDepartment:any = departmentService.getDepartmentByName(departmentName);
+    const foundDepartment:any = await departmentService.getDepartmentByName(departmentName);
     console.log(`Adding role: ${roleName} with salary: ${salary} and department: ${departmentName}...`);
-    roleService.createRole(roleName, salary, foundDepartment.id);
+    await roleService.createRole(roleName, salary, foundDepartment.id);
     startApplication();  // return to main menu
 };
 
@@ -124,7 +125,7 @@ const addEmployee = async () => {
 
     const employees = await employeeService.getEmployees();
     const employeeNames = employees.map((employee) => `${employee.first_name} ${employee.last_name}`);
-    const { firstName, lastName, roleName, managerName } = await inquirer.prompt([
+    const { firstName, lastName, roleName, managerName } = await inq.prompt([
         {
             type: 'input',
             name: 'firstName',
@@ -139,7 +140,7 @@ const addEmployee = async () => {
             type: 'list',
             name: 'roleName',
             message: 'Choose a role for the new employee:',
-            choices: roleNames
+            choices: [...roleNames]
         },
         {
             type: 'list',
@@ -155,27 +156,27 @@ const addEmployee = async () => {
     startApplication();  // Return to main menu
 };
 
-
 const updateEmployeeRole = async () => {
-    const employees = employeeService.getEmployees();
-    const roles = roleService.getRoles();
-    const { employeeName, roleName } = await inquirer.prompt([
+    const employees = await employeeService.getEmployees();
+    const roles = await roleService.getRoles();
+
+    const { employeeName, roleName } = await inq.prompt([
         {
             type: 'list',
             name: 'employeeName',
             message: 'Select the Employee to update:',
-            choices: [(await employees).map((employee) => `${employee.first_name} ${employee.last_name}`)]
+            choices: employees.map((employee) => `${employee.first_name} ${employee.last_name}`)
         },
         {
             type: 'list',
             name: 'roleName',
             message: `Select the Employee's new role:`,
-            choices: [(await roles).map((role) => role.title)]
+            choices: roles.map((role) => role.title)
         }
     ]);
 
     console.log(`Updating employee ${employeeName} to role ${roleName}...`);
-    employeeService.updateEmployee(employeeName, roleName);
+    await employeeService.updateEmployee(employeeName, roleName);
     startApplication();  // return to main menu
 };
 

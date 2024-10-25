@@ -39,7 +39,7 @@ class DepartmentService {
             throw new Error(`[ERROR] DepartmentByName query did not get a response from the database`);
         }
     }
-    async getDepartments(): Promise<Department[]> {
+    async getDepartments(): Promise<any[]> {
         try {
             const res = await pool.query("SELECT * FROM department");
             return res.rows; // return the list of departments

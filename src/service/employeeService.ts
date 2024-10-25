@@ -31,66 +31,95 @@ class EmployeeService {
 		manager_name: string
 	): Promise<void> {
 		try {
-			// splits the first name from the rest of the name
-			const managerFullNameArray = manager_name.split(" ");
+			if (manager_name != "None") {
+				// Split the full manager name into first and last names
+				const managerFullNameArray = manager_name.split(" ");
+				const [managerFirstName, ...managerLastNameArray] =
+					managerFullNameArray;
+				const managerLastName = managerLastNameArray.join(" ");
 
-			// assuming some last names have separated words by space, put the rest of the name in lastNameArray
-			const [managerFirstName, ...managerLastNameArray] = managerFullNameArray;
+				// Query to find the manager
+				const managerResult: any = await pool.query(
+					"SELECT * FROM employee WHERE first_name=$1 AND last_name=$2",
+					[managerFirstName, managerLastName]
+				);
 
-			// create complete string of last name
-			const managerLastName = managerLastNameArray.join(" ");
-			const managerResult = await pool.query(
-				"SELECT * from employee WHERE first_name=$1 AND last_name=$2",
-				[managerFirstName, managerLastName]
-			);
-
-			if (managerResult.rowCount != null && managerResult.rowCount > 0) {
+				// Check if the manager exists
+				if (managerResult.rowCount > 0) {
+					// Get the role ID by the role title
+					const role = await roleService.getRoleByTitle(role_name);
+					if (role) {
+						// Insert the new employee
+						await pool.query(
+							"INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ($1, $2, $3, $4)",
+							[first_name, last_name, role.id, managerResult.rows[0].id]
+						);
+					} else {
+						console.error(`[ERROR] Role '${role_name}' not found.`);
+					}
+				} else {
+					console.error(`[ERROR] Manager '${manager_name}' not found.`);
+				}
+			}
+			else {
+				// Get the role ID by the role title
 				const role = await roleService.getRoleByTitle(role_name);
-				if (role != null) {
+				if (role) {
+					// Insert the new employee
 					await pool.query(
-						"INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ($1,$2,$3,$4)",
-						[first_name, last_name, role.id, managerResult.rows[0].id]
+						"INSERT INTO employee (first_name, last_name, role_id) VALUES ($1, $2, $3)",
+						[first_name, last_name, role.id]
 					);
+				} else {
+					console.error(`[ERROR] Role '${role_name}' not found.`);
 				}
 			}
 		} catch (err) {
+			console.error(`[ERROR] createEmployee query failed: ${err}`);
 			throw new Error(
-				`[ERROR] createEmployee query did not get a response from the database: ${err}`
+				`createEmployee query did not get a response from the database: ${err}`
 			);
 		}
 	}
 
 	async updateEmployee(full_name: string, roleName: string) {
 		try {
-			// splits the first name from the rest of the name
+			// Split the full name into first name and last name
 			const fullNameArray = full_name.split(" ");
-
-			// assuming some last names have separated words by space, put the rest of the name in lastNameArray
 			const [firstName, ...lastNameArray] = fullNameArray;
-
-			// create complete string of last name
 			const lastName = lastNameArray.join(" ");
-			const employeeResult = await pool.query(
-				"SELECT * from employee WHERE first_name=$1 AND last_name=$2",
+	
+			// Query to find the employee
+			const employeeResult:any = await pool.query(
+				"SELECT * FROM employee WHERE first_name=$1 AND last_name=$2",
 				[firstName, lastName]
 			);
-
-			if (employeeResult.rowCount != null && employeeResult.rowCount > 0) {
-				const role: any = roleService.getRoleByTitle(roleName);
-				if (role != null) {
+	
+			// Check if the employee exists
+			if (employeeResult.rowCount > 0) {
+				// Await the role service to ensure we have the role object
+				const role: any = await roleService.getRoleByTitle(roleName);
+				if (role) { // Check if the role exists
 					const employee = employeeResult.rows[0];
+					// Update the employee's role_id
 					await pool.query("UPDATE employee SET role_id=$1 WHERE id=$2", [
 						role.id,
 						employee.id,
 					]);
+					console.log(`Employee ${full_name}'s role updated to ${roleName}.`);
+				} else {
+					console.error(`[ERROR] Role '${roleName}' not found.`);
 				}
+			} else {
+				console.error(`[ERROR] Employee '${full_name}' not found.`);
 			}
 		} catch (err) {
+			console.error(`[ERROR] UpdateEmployee query failed: ${err}`);
 			throw new Error(
-				`[ERROR] UpdateEmployee query did not get a response from the database: ${err}`
+				`UpdateEmployee query did not get a response from the database: ${err}`
 			);
 		}
-	}
+	}	
 
 	async getEmployeeById(id: number): Promise<Employee | null> {
 		try {
@@ -109,6 +138,7 @@ class EmployeeService {
 			);
 		}
 	}
+	
 
 	async getEmployeeByRoleId(role_id: number): Promise<Employee[]> {
 		try {
@@ -215,9 +245,14 @@ class EmployeeService {
 		}
 	}
 
-	async getEmployees(): Promise<Employee[]> {
+	async getEmployees(): Promise<any[]> {
 		try {
-			const result = await pool.query("SELECT * FROM employee");
+			const result =
+				await pool.query(`SELECT e.id AS employee_id, e.first_name AS first_name, e.last_name AS last_name, r.title AS role, (m.first_name || ' ' || m.last_name) AS manager_name 
+				FROM employee e
+				LEFT JOIN employee m
+				ON e.manager_id = m.id
+				LEFT JOIN role r ON e.role_id = r.id`);
 			return result.rows;
 		} catch (err) {
 			throw new Error(

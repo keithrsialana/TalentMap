@@ -8,7 +8,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc",
     "start:dev":"tsc && npm run start",
-    "start": "nodemon ./dist/main.js"
+    "start": "node ./dist/main.js"
   },
   "author": "Keith Sialana",
   "license": "MIT",
