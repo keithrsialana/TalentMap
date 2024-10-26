@@ -2,7 +2,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ### Demo Video
-Coming soon!
+Demo video of how to use the application can be found [here](https://github.com/keithrsialana/TalentMap)
 
 ## Table of Contents
 - [Description](#Description)
